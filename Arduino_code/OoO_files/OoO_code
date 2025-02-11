@@ -1,0 +1,217 @@
+#include <SPI.h>
+
+const int serialData = 3;
+const int shiftClock = 5;
+const int latchClock = 4;
+const int clearPin = 6;
+const int button1Pin = 8;
+const int button2Pin = 9;
+const int button3Pin = 10;
+
+int colours[]{
+  1,  //Red
+  2,  //Green
+  4,  //Blue
+  3,  //Yellow
+  6,  //Teal
+  5,  //Magenta
+  7   //White
+};
+
+
+
+int dial1[7]{};
+int dial2[7]{};
+int dial3[7]{};
+
+int button1State = 0;
+int button2State = 0;
+int button3State = 0;
+bool triggerState1 = false;
+bool triggerState2 = false;
+bool triggerState3 = false;
+
+uint64_t output = 0;
+bool up = true;
+int dial1Index = 0;
+int dial2Index = 0;
+int dial3Index = 0;
+uint64_t dial1Data = 0;
+uint64_t dial2Data = 0;
+uint64_t dial3Data = 0;
+
+const int numColours = sizeof(colours) / sizeof(colours[0]);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(serialData, OUTPUT);
+  pinMode(shiftClock, OUTPUT);
+  pinMode(latchClock, OUTPUT);
+  pinMode(clearPin, OUTPUT);
+  pinMode(button1Pin, INPUT);
+  pinMode(button2Pin, INPUT);
+  pinMode(button3Pin, INPUT);
+
+  digitalWrite(clearPin, LOW);
+  digitalWrite(clearPin, HIGH);
+  
+  randomSeed(analogRead(0));
+  /*
+  digitalWrite(latchClock, LOW);
+  shiftOut(serialData, shiftClock, MSBFIRST, colours[2]);
+  digitalWrite(latchClock, HIGH);
+  */
+
+  setDialArray(dial1, dial2, dial3, colours);
+}
+
+void loop() {
+
+  button1State = digitalRead(button1Pin);
+  button2State = digitalRead(button2Pin);
+  button3State = digitalRead(button3Pin);
+
+  //Increments through dial1 array and shifts over 1 LED with button press
+  if(!triggerState1 && button1State == HIGH){
+    triggerState1 = true;                                 //Only cycle once per button press
+    if(up =! true){                                       //checks if previous state was incrementing
+      if(dial1Index == 5){                                //checks for index overflow
+        dial1Index = 0;
+        }
+        else if(dial1Index == 6){
+          dial1Index = 1;
+        }
+        else{
+          dial1Index = dial1Index + 2;
+        }
+      up = true;
+    } 
+    //Shifts data over 3 bits (1 LED) and increments dial1Index
+    dial1Data = (dial1[dial1Index] << dial1Index*3) & (0x7 << dial1Index*3);  
+    if(dial1Index < 6){
+      dial1Index ++;
+      }
+      else{
+        dial1Index = 0;
+    }
+    output = dial3Data | dial2Data | dial1Data;   // concatenates all dial data to output
+    digitalWrite(latchClock, LOW);
+    for(int i = 7; i >= 0; i--){
+      byte outputData = (output >> (i*8)) & (0xFF);   //extraxts data bytes and sends out data MSB first
+      Serial.println(outputData);
+      shiftOut(serialData, shiftClock, MSBFIRST, outputData);
+      //SPI.transfer(outputData);
+      delay(30);
+    }
+    digitalWrite(latchClock, HIGH);
+  }
+  //Resets trigger state for button1
+  if(triggerState1 && button1State == LOW){
+    triggerState1 = false;
+    delay(30);
+  }
+
+
+  //Increments through dial1 array and shifts over 1 LED with button press
+  if(!triggerState2 && button2State == HIGH){
+    triggerState2 = true;                             //Only cycle once per button press
+    if(up == true){                                   //checks if previous state was decrementing
+      if(dial1Index == 1){                            //checks for index overflow
+        dial1Index = 6;
+        }
+        else if(dial1Index == 0){
+          dial1Index = 5;
+        }
+        else{
+          dial1Index = dial1Index - 2;
+        }
+      up = false;
+    } 
+    //Shifts data over 3 bits (1 LED) and decrements dial1Index
+    dial1Data = (dial1[dial1Index] << dial1Index*3) & (0x7 << dial1Index*3);
+    if(dial1Index > 0){
+      dial1Index --;
+      }
+      else{
+        dial1Index = 6;
+    }
+    output = dial3Data | dial2Data | dial1Data;     // concatenates all dial data to output
+    digitalWrite(latchClock, LOW);
+    for(int i = 7; i >= 0; i--){
+      byte outputData = (output >> (i*8)) & (0xFF);     //extraxts data bytes and sends out data MSB first
+      shiftOut(serialData, shiftClock, MSBFIRST, outputData);
+      //SPI.transfer(outputData);
+      delay(30);
+    }
+    digitalWrite(latchClock, HIGH); 
+  }
+  //Resets trigger state for button 2
+  if(triggerState2 && button2State == LOW){
+    triggerState2 = false;
+    delay(30);
+  }
+
+
+  //Randomizes Dial 1 array and moves output back to LED 1
+  if(!triggerState3 && button3State == HIGH){
+    triggerState3 = true;
+    
+    
+    delay(30);
+    
+
+  }
+
+  //Resets trigger state for button3
+  if(triggerState3 && button3State == LOW){
+    triggerState3 = false;
+    delay(30);
+  }
+  
+}
+//Shuffles an array
+void shuffleArray(int array[], int size){
+      for(int i= size-1; i>0; i--){
+        int j = random(0, i+1);
+        int temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      }
+  }
+
+//Shuffles colours array and copies to dial1, dial2, and dial3 each
+void setDialArray(int dial1[], int dial2[], int dial3[], int source[]){
+  shuffleArray(source, numColours);
+  for(int i=0; i < numColours; i++){
+    dial1[i] = source[i];
+  }
+  shuffleArray(source, numColours);
+  for(int i=0; i < numColours; i++){
+    dial2[i] = source[i];
+  }
+  shuffleArray(source, numColours);
+  for(int i=0; i < numColours; i++){
+    dial3[i] = source[i];
+  }
+  
+  for(int j=0; j<numColours; j++){
+    Serial.print(dial1[j]);
+  }
+  Serial.println("");
+  for(int j=0; j<numColours; j++){
+    Serial.print(dial2[j]);
+  }
+  Serial.println("");
+  for(int j=0; j<numColours; j++){
+    Serial.print(dial3[j]);
+  }
+  Serial.println("");
+  
+}  
+
+
+
+
+
+
+
