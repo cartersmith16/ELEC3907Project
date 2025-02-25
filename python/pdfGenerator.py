@@ -1,17 +1,26 @@
 from string import Template
-d = {
-    'title': 'This is the title',
-    'name': 'Johnny Sins',
-    'food': '\n'.join(['aples', 'oranges', 'pears'])
-}
+import random
 
-with open('resources/pdfTemplates/template.txt', 'r') as f:
-    src = Template(f.read())
-    result = src.substitute(d)
-    print(result)
+
+def main():
+    colours = ['Green', 'Blue', 'Red', 'Yellow']
+    random_indices = random.sample(range(len(colours)), len(colours))
+
+    d = {
+        f'colour{i+1}': colours[random_indices[i]] for i in range(len(colours))
+        }
+
+
+    with open('resources/pdfTemplates/template.txt', 'r') as f:
+        src = Template(f.read())
+        result = src.substitute(d)
+        print(result)
     
-    text_file = open("resources/pdfTemplates/instructions.txt'", "w")
+        text_file = open("resources/pdfTemplates/instructions.txt", "w")
 
-    text_file.write(result)
+        text_file.write(result)
 
-    text_file.close()
+        text_file.close()
+
+main()
+

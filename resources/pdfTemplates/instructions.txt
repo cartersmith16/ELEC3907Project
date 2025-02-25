@@ -1,7 +1,7 @@
 Repeat after me:
 The colour of the lights does not nessisarly corispond to the colour of the button:
 
-Red Light : $colour1
-Green Light : $colour2
-Blue Light : $colour3
-Yellow Light : $colour4
+Red Light : Green
+Green Light : Blue
+Blue Light : Yellow
+Yellow Light : Red
