@@ -11,10 +11,11 @@ time.sleep(2)
 
 serialCarter.flushInput()
 
-numberToSend = "123456\n"
-serialCarter.write(numberToSend.encode())
+arrayToSend = "1,2,3,4,5,6\n"
+print("About to send the array")
+serialCarter.write(arrayToSend.encode())
 
-time.sleep(1)
+time.sleep(2)
 
 serialCarter.write(b'START\n')
 
